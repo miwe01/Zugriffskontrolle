@@ -1,20 +1,20 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\SocialNetwork;
+use App\Models\SocialNetwork_api;
 use Illuminate\Http\Request;
 
 class ApiController extends Controller
 {
     // Bekomme alle Benutzer Namen
     public function allUsers_api(){
-        $model = new SocialNetwork();
+        $model = new SocialNetwork_api();
         return $model->allUsers();
     }
 
     // Bekomme alle Resourcen Namen
     public function allResources_api(){
-      $model = new SocialNetwork();
+      $model = new SocialNetwork_api();
       return $model->allResources();
     }
       
@@ -23,7 +23,7 @@ class ApiController extends Controller
       if (!$req->has('firstname') || !$req->has('lastname') || !$req->has('age'))
           return "Fehler: Parameter falsch";
 
-      $model = new SocialNetwork();
+      $model = new SocialNetwork_api();
       return $model->addUser($req->input('firstname'), $req->input('lastname'), $req->input('age'));
     }
 
@@ -32,7 +32,7 @@ class ApiController extends Controller
       if (!$req->has('name'))
           return "Fehler: Parameter falsch";
       
-      $model = new SocialNetwork();
+      $model = new SocialNetwork_api();
       return $model->addFile($req->input('name'));
     }
 
@@ -41,7 +41,7 @@ class ApiController extends Controller
       if (!$req->has('user1') || !$req->has('user2') || !$req->has('relation') || !$req->has('trust'))
           return "Fehler: Parameter falsch";
       
-      $model = new SocialNetwork();
+      $model = new SocialNetwork_api();
       return $model->addEdgeUserUser($req->input('user1'), $req->input('user2'), $req->input('relation'), $req->input('trust'));
     }
 
@@ -50,7 +50,7 @@ class ApiController extends Controller
       if (!$req->has('user') || !$req->has('file') || !$req->has('stakeholder') ||  !$req->has('trust') || !$req->has('actions') || !$req->has('agg'))
           return "Fehler: Parameter falsch";
 
-      $model = new SocialNetwork();
+      $model = new SocialNetwork_api();
       return $model->addEdgeUserFile($req->input('user'), $req->input('file'), $req->input('stakeholder'), $req->input('trust'), $req->input('actions'), $req->input('agg'));
     }
     
