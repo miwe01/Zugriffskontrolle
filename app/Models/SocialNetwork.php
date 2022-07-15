@@ -19,10 +19,11 @@ class SocialNetwork extends Model
 {
     protected $connection;
     protected const DB = "SocialNetwork";
-    protected const HOPS = 2;
+    protected const HOPS = 3;
+    protected const trustTable = ["family"=>0.8, "friends"=>0.6, "others"=>0.4];
+
     protected const labelUser = "person";
     protected const labelFile = "file";
-    protected const trustTable = ["family"=>0.8, "friends"=>0.6, "others"=>0.4];
     
     
     // Konstruktor
@@ -43,6 +44,7 @@ class SocialNetwork extends Model
     public function createGraph(){
         return new GraphConstructor(self::DB);
     }
+
 
     // Bekomme alle User
     public function allUsers(){
@@ -136,56 +138,108 @@ class SocialNetwork extends Model
         }
     }
 
-    // Erstelle Kante User->User
+    // Erstelle Kante User->User, wenn schon eine existiert lösche die vorherige Kante
     public function addEdgeUserUser($user1, $user2, $relation, $trust){
         if(empty($trust))
             $trust = self::trustTable[$relation] ?? 0;
         // Trenne $user, in firstname und lastname
+
         $a = explode(" ", $user1);
         $b = explode(" ", $user2);
 
+        // $q1 = 
+        'MATCH (p1:person {firstname: "' . $a[0] . '", lastname: "' . $a[1] . '"})
+        -[i:is]->
+        (p2:person {firstname: "'. $b[0] . '", lastname: "' . $b[1] .'"}) DELETE i';
+
         // Falls Kante noch nicht gibt, wird die Kante hinzugefügt
-        $q1 = 
+        $q2 = 
         'MATCH (p1:person {firstname: "' . $a[0] . '", lastname: "' . $a[1] . '"}), 
         (p2:person {firstname: "'. $b[0] . '", lastname: "' . $b[1] .'"}) 
-        MERGE (p1)-[i:is {name: "' . $relation .'", trust: "' . $trust . '"}]->(p2)';
+        MERGE (p1)-[i:is {name: "' . $relation .'", distance: ' . $trust . '}]->(p2)';
+
+        // $q2 = 
+        // 'MATCH (p1:person {firstname: "' . $a[0] . '", lastname: "' . $a[1] . '"})
+        // -[i:is]-> 
+        // (p2:person {firstname: "'. $b[0] . '", lastname: "' . $b[1] .'"}) 
+        // SET i.name = "' . $relation . '", i.distance = ' . $trust;
+
+
+       
+        // $conn = $this->getConnection();
+        // try{
+        //     $conn->query(new Query(self::DB, $q1));
+        // }
+        // catch(Predis\Connection\ConnectionException){
+        //         throw new Exception("Fehler bei Verbindung");
+        // }
 
         $conn = $this->getConnection();
         try{
-            $conn->query(new Query(self::DB, $q1));
+            $conn->query(new Query(self::DB, $q2));
         }
         catch(Predis\Connection\ConnectionException){
                 throw new Exception("Fehler bei Verbindung");
         }
 
+
+        //dd($q2);
         return "Die Kante wurde hinzugefügt";
     }
 
-    // Erstelle Kante User->File
-    public function addEdgeUserFile($user, $filename, $stakeholder, $trust, $actions){
+    // Erstelle Kante User->File, wenn schon einer Owner ist, mache den nächsten Coowner
+    public function addEdgeUserFile($user, $filename, $stakeholder, $trust, $actions, $agg){
+        $change = false; // wenn owner zu coowner umgeändert wird, weil es schon einen owner gibt
+
         // Trenne $user, in firstname und lastname
         $a = explode(" ", $user);
         // Trenne aktionen voneinander
         $actions = explode(",", $actions);
 
+        // Überprüfe ob Stakeholder owner schon gibt wenn ja mache ihn coowner
+        $q1 = 'MATCH (p:person)-[h:have]->(f:file{name:"' . $filename . '"}) WHERE h.stakeholder = "owner" RETURN p.firstname, p.lastname LIMIT 1';
         $conn = $this->getConnection();
+
+        try{
+            $conn->query(new Query(self::DB, $q1));
+            $result = $conn->query(new Query(self::DB, $q1))->getResultSet();
+            if(count($result) > 0 && $result[0][0] != $a[0] && $result[0][1] != $a[1]){
+                $stakeholder = "coowner";
+                $change = true;
+            } 
+        }
+        catch(Predis\Connection\ConnectionException){
+                throw new Exception("Fehler bei Verbindung");
+        }
         
+        // Erstelle Kante für jede Aktion zu Resource
         for($i=0;$i<count($actions);$i++){
             $action = $actions[$i];
-            // Falls Kante noch nicht gibt, wird die Kante hinzugefügt
-            $q1 = 
-            'MATCH (p1:person {firstname: "' . $a[0] . '", lastname: "' . $a[1] . '"}), 
-            (f:file {name: "'. $filename .'"}) 
-            MERGE (p1)-[i:is {stakeholder: "' . $stakeholder .'", trust: "' . $trust . '", action:"' . $action . '" }]->(f)';
+            // Falls Kante noch nicht gibt, wird die Kante hinzugefügt¨
+
+            if($stakeholder == "coowner"){
+                $q2 = 
+                'MATCH (p1:person {firstname: "' . $a[0] . '", lastname: "' . $a[1] . '"}), 
+                (f:file {name: "'. $filename .'"}) 
+                MERGE (p1)-[h:have {stakeholder: "' . $stakeholder .'", trust: "' . $trust . '", action:"' . $action . '" }]->(f)';
+            }
+            else{
+                $q2 = 
+                'MATCH (p1:person {firstname: "' . $a[0] . '", lastname: "' . $a[1] . '"}), 
+                (f:file {name: "'. $filename .'"}) 
+                MERGE (p1)-[h:have {stakeholder: "' . $stakeholder .'", trust: "' . $trust . '", action:"' . $action . '", type: "' . $agg .'"}]->(f)';
+            }
+            
 
             try{
-                $conn->query(new Query(self::DB, $q1));
+                $conn->query(new Query(self::DB, $q2));
             }
             catch(Predis\Connection\ConnectionException){
                     throw new Exception("Fehler bei Verbindung");
             }
         }
-
+        if($change)
+            return "Gibt schon Besitzer für Datei, Kante wurde als Mitbesitzer hinzugefügt";
          return "Die Kante wurde hinzugefügt";
     }
     
@@ -205,18 +259,21 @@ class SocialNetwork extends Model
         $conn = $this->getConnection();
         try{   
             $result1 = $conn->query(new Query(self::DB, $q1));
+
             if(count($result1->getResultSet()) == 0)
                 throw new Exception("Keine Resource gefunden");
             
             $result2 = $conn->query(new Query(self::DB, $q2));
             
             $result3 = $conn->query(new Query(self::DB, $q3));
+
         } 
         catch(Predis\Connection\ConnectionException){
             throw new Exception("Fehler bei Verbindung");
         }
 
         // Falls Benutzer Stakeholder ist
+ 
         if(count($result2->getResultSet()) == 1) return true; 
         
         // Gib Aggregation der Resource zurück
@@ -250,19 +307,23 @@ class SocialNetwork extends Model
         if(count($stakeholder) == 0) throw new Exception("Keine Stakeholder gefunden");
 
         // 2. Schritt
-        $log[] = "<h4>Pfad Traversierung</h4><ul>";        
+        if($logAllow) $log[] = "<h3>Pfad Traversierung</h3>";
+
+       
         for($i=0;$i<count($stakeholder);$i++){
             // Bekomme Pfad von Stakeholder zu User (der Zugriff haben möchte)
             // Query summiert die Kanten der Knoten bis zum dem Benutzer der die Ressource angefragt hat zusammen
             // Gib den Pfad mit der höchsten Zahl zurück
-
+            
+            
             $q = 
             'MATCH (from:person{firstname:"' . $stakeholder[$i][0] . '", lastname:"' . $stakeholder[$i][1] . '"}),
             (to:person{firstname:"' . $u[0] . '", lastname:"' . $u[1] . '"})
             WITH from, to MATCH path = (from)-[:is*1..' . self::HOPS . ']->(to) 
             WITH REDUCE (total = 1, r in relationships(path) | total * r.distance) 
-            as cost, path ORDER BY cost DESC RETURN cost LIMIT 1';
+            as cost, path ORDER BY cost DESC RETURN cost, path LIMIT 1';
     
+            
             $matchQuery = new Query(self::DB, $q);
             try{
                 $result = $conn->query($matchQuery);
@@ -273,6 +334,8 @@ class SocialNetwork extends Model
 
             $resultSet = $result->getResultSet();
 
+
+
             // 3. Schritt
             if(count($resultSet) != 0)
                 $pathTrust[] = $resultSet[0][0];
@@ -281,11 +344,14 @@ class SocialNetwork extends Model
                 $pathTrust[] = 0;
             
             if($logAllow){
-                $log[] = "<li>Pfad von ". $stakeholder[$i][0]  . " " . $stakeholder[$i][1]  ." -> " . $pathTrust[$i] . "</li>";
+                $log[] = "<li>Pfad von ". $stakeholder[$i][0]  . " " . $stakeholder[$i][1]  ." -> <b>" . $pathTrust[$i] . "</b></li>";
+                
+                if(!empty($resultSet))
+                    $log[] = "<li>Knoten und Pfade: " .  $resultSet[0][1] . "</li>";
             }
         }
-        if($logAllow){ $log[] = "</ul>"; }
-        
+ 
+       
         // 4. Schritt
         return $pathTrust;
     }
@@ -301,6 +367,7 @@ class SocialNetwork extends Model
     public function stakeholderActions($r, $aggregation, $pathTrust, $action, &$log, $logAllow){
         $policy = [];
         $actions = [];
+        $actionFehler = false;
         $i = 0;
 
         //1. Schritt
@@ -320,58 +387,87 @@ class SocialNetwork extends Model
 
         // Stkh = Stakeholders
         $StkhTrustAndActions = $result->getResultSet();
+        //dd($StkhTrustAndActions);
 
         if(count($StkhTrustAndActions) == 0) throw new Exception("Fehler bei Query");
-        if(count($pathTrust) != count($StkhTrustAndActions)) throw new Exception("Fehler aufgetreten: Pfad Array und Vetrtauen Stakeholder nicht gleich lang");;
-        
-        if($logAllow) $log[] = "<h4>Erlaubte Aktionen</h4><ol>";
+        if(count($pathTrust) != count($StkhTrustAndActions)) throw new Exception("Fehler aufgetreten: Pfad Array und Vetrtauen Stakeholder nicht gleich lang");
+
+        // dd($arr);
+        if($logAllow) $log[] = "<h3>Erlaubte Aktionen von Stakeholder</h3>";
 
         // 2. Schritt
+        
         for($i=0;$i<count($StkhTrustAndActions);$i++){
             $trust[] = $StkhTrustAndActions[$i][0]; // alle Vertrauenslevel von Stakeholder
             $name = $StkhTrustAndActions[$i][2] . " " . $StkhTrustAndActions[$i][3]; // Name von Stakeholder zu Resource
             
             // alle erlaubten Aktionen von Stakeholdern
-            //Gibt statt Array => [] Resultat als String zurück
-            $array = explode(',', str_replace(array('[', ']'), '', $StkhTrustAndActions[$i][1]));
-            
-            for($j=0;$j<count($array);$j++){
-                if($logAllow) $log[] = "<li>". $name . ": ". $array[$j] ." </li>";
+            //Gibt statt Array => [] Resultat als String zurück   
+            $sanitize = str_replace(array('[', ']'), '', $StkhTrustAndActions[$i][1]);
+            if($logAllow) $log[] = "<li>". $name . ": ". $sanitize ." </li>";
 
-                // Füge Aktion zusammen in ein Array
-                $actions[] = $array[$j];
-            }
+            // in Array umwandeln und dann in Array von Array
+
+            $sanitize = str_replace(" ", "", $sanitize);
+            $sanitize = explode(',', $sanitize);
+            $actions[] = $sanitize;
+           
                
         }
-        $actions = array_unique($actions);
+        // dd($log);
+        // dd($actions);
+        // $actions = array_unique($actions);
+        
 
-        if($logAllow) $log[] = "</ol><h4>Vertrauenslevel</h4><ol>";
+        if($logAllow) $log[] = "<h3>Überprüfe ob Benutzer Zugriff hat</h3>Überprüfe ob Pfad Vertrauen > Stakeholder Vertrauen";
         // 3. Schritt
         // Wenn Aggregation average ist, wird anders berechnet wie bei anderen Aggregationen
+       
+        $avg = false;
         if ($aggregation == AGGREGATION[0]){
-            $avg = array_sum($pathTrust)/count($pathTrust);
-            $x = $pathTrust[$i] > $avg;
+            $avg = array_sum($trust)/count($trust);
+
+            if($logAllow) $log[] = "<p>Durchschnittlicher Stakeholder-Vertrauen: <b>" . $avg . "</b></p>";
         }
-        else // andere Aggregation als avg zB conj, disj...
-            $x = $trust;
 
         // 3. Schritt: vergleiche Vertrauenslevel von Stakeholder zu Ressource mit
         // summierten Vertrauenslevel von Pfadvertrauen zu dem Benutzer der angefragt hat
+      
+        
         for($i=0;$i<count($pathTrust);$i++){
-            if($pathTrust[$i] > $x[$i])
+            $name = $StkhTrustAndActions[$i][2] . " " . $StkhTrustAndActions[$i][3];
+            $trust[] = $StkhTrustAndActions[$i][0];
+
+            if($avg)
+                $x = $avg;
+            else
+                $x = $trust[$i];
+            
+
+            if($pathTrust[$i] > $x)
                 $policy[] = "true";
             else
                 $policy[] = "false";
-            
-            if($logAllow) $log[] = "<li>Stakeholder Vertrauen von Resource -> "  . $x[$i] . ". Resultat: " . $policy[$i] ."</li>";
+
+            if($logAllow) 
+                $log[] = "<p><b>" . $name . "</b><p>
+                          <p>Stakeholder-Vertrauen: -> "  . $trust[$i] . "<br>
+                          Pfad-Vertrauen " . $pathTrust[$i] . "<br>
+                          Ist Pfad ". $pathTrust[$i] . " > Stakeholder " . $x . " ? <b>" . $policy[$i] ."</b></p>";
+                          
+
+            // 4. Schritt
+            if(!in_array($action, $actions[$i]))           
+                $actionFehler = true;
         }
-        if($logAllow) $log[] = "</ol>";
-   
-        // 4. Schritt
-        if(!in_array($action, $actions)){
-            if($logAllow) $log[] = "<p>Die Aktion hatte nicht jeder Stakeholder zur Verfügung</p>";
+
+        if($actionFehler){
+            if($logAllow) $log[] = "<p>Die Aktion <b>" . $action . "</b> unterstützt <b>nicht</b> jeder Stakeholder</p>";
             $action = "false";
         }
+            
+   
+        
             
         // 5. Schritt
         return array($action, $policy);
