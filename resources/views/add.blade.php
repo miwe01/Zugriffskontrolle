@@ -45,10 +45,16 @@
             <option value="owner">Besitzer</option>
             <option value="coowner">Mitbesitzer</option>
         </select>
+        <select id="aggregation">
+            <option value="disj">disj</option>
+            <option value="conj">conj</option>
+            <option value="maj">maj</option>
+            <option value="avg">avg</option>
+        </select>
+
         <input type="text" id="trust2" placeholder="Vertrauen">
-        <input type="checkbox" id="read" value="read">Lesen
         <input type="checkbox" id="like" value="like">Like
-        <input type="checkbox" id="comment" value="comment">Kommentieren
+        <input type="checkbox" id="comment" value="comment">Schreiben
         <button onclick="pressUserFile()">Drücken</button>
         <div id="output4"></div>
 
@@ -61,11 +67,13 @@
             const id = "users";
             const length = 3;
 
+
             axios.get(url)
             .then(function (response) {
                 if(response.data.length != 0){
                     for(let i=1;i<=length;i++){
                         var select = document.getElementById(id + i);
+                        select.innerHTML = "";
 
                         for(let i=0;i<response.data.length;i++){
                             let option = document.createElement("option");
@@ -82,6 +90,7 @@
         }
 
         function getData($url, $id){
+            document.getElementById($id).innerHTML = "";
             axios.get($url)
             .then(function (response) {
                 if(response.data.length != 0){
@@ -114,6 +123,7 @@
 
             axios.get('/api/addFile?name=' + name)
             .then(function (response) {
+                getData("/api/allResources", "resources")
                 document.getElementById("output1").innerHTML = response.data
             })
             .catch(function (error) {
@@ -133,6 +143,7 @@
 
             axios.get('/api/addUser?firstname=' + firstname + '&lastname=' + lastname + '&age=' + age)
             .then(function (response) {
+                getDataUsers()
                 document.getElementById("output2").innerHTML = response.data
             })
             .catch(function (error) {
@@ -158,7 +169,7 @@
         function pressUserFile(){
             let trust = document.getElementById("trust2").value;
             let checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-            if(trust == "" || checkboxes.length == 0){
+            if(trust == ""){
                 document.getElementById("output4").innerHTML = "Nicht alle Felder ausgefüllt";
                 return;
             }
@@ -169,6 +180,7 @@
             let u = document.getElementById("users3").value;
             let f = document.getElementById("resources").value;
             let stakeholder = document.getElementById("stakeholder").value;
+            let agg = document.getElementById("aggregation").value;
             
 
             
@@ -177,8 +189,9 @@
                  a.push(checkboxes[i].value)
             }
 
+            console.log(agg);
 
-            axios.get('/api/addEdgeUserFile?user=' + u + '&file=' + f + '&stakeholder=' + stakeholder + '&trust=' + trust + '&actions=' + a)        
+            axios.get('/api/addEdgeUserFile?user=' + u + '&file=' + f + '&stakeholder=' + stakeholder + '&agg=' + agg + '&trust=' + trust + '&actions=' + a)        
             .then(function (response) {
                 document.getElementById("output4").innerHTML = response.data
             })
