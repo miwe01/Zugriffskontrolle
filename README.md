@@ -1,64 +1,129 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Zugriffskontrolle  
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Das Abschlussprojekt enthält einen Prototyp einer Zugriffskontrolle in einem sozialen Netzwerk.
 
-## About Laravel
+Die Zugriffskontrolle ist größenteils nach dem [Rathore-Modell](https://link.springer.com/article/10.1007/s13278-017-0425-6) umgesetzt worden.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Installation Windows
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```
+### Repository clonen
+git clone https://github.com/miwe01/Zugriffskontrolle Zugriffskontrolle
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Abhängigkeiten mit Composer installieren 
+composer install
 
-## Learning Laravel
+### Die Datei .env.example umbenennen in .env
+ren .env.example .env
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Application key generieren
+php artisan key:generate
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Docker installieren
+[Docker Installation Seite](https://docs.docker.com/get-docker/)
 
-## Laravel Sponsors
+### Installation Redis Stack mit Docker
+docker run -d --name redis-stack-server -p 6379:6379 redis/redis-stack-server:latest
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+[Redis Installation Seite](https://redis.io/docs/stack/get-started/install/docker/)
 
-### Premium Partners
+### Optional: Redis Insight installieren
+[Redis Insight Seite](https://redis.com/redis-enterprise/redis-insight/)
+```
+## Github Repository
+Außerdem wurde die library [redislabs-redisgraph](https://github.com/mkorkmaz/redislabs-redisgraph-php) benutzt, um den Graphen zu erstellen und Knoten/Kanten hinzuzufügen.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+### Issues
+Bei der Entwicklung hatte ich zwei Issues festgestellt, die ich auch gemeldet habe.
+[Issue1](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/5)
+[Issue2](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/6)
 
-## Contributing
+Falls das Repository noch nicht geupdated wurde, muss man nur in die "Pfad/Edge.php" und "Pfad/Constructor.php", den Code hinufügen
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+"Code1"
 
-## Code of Conduct
+"Code2"
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Probleme
+Wenn man den ganzen Graph löschen muss, muss man manuell in Docker die cli aufrufen und den Befehl
+GRAPH.DELETE SocialNetwork
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Routen
+schaue nochmal Projekt 
+ /demo -> Demo ausprobieren
+ /add -> Knoten/Kanten hinzufügen
+ /create -> Massendaten erstellen
 
-## License
+## Wichtige Dateien
+### Controller
+Controller -> Verarbeitet Anfrage ob Benutzer Zugriff auf Resource hat und gibt Endresultat zurück 
+ApiController -> schickt Api Anfragen weiter an Model
+FactoryController -> erstellt Massendaten
+BaseController -> erstellt kleinen Graph (der gleiche wie in der Demo)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Model
+Social Network -> enthält alle Anfragen und stellt Verbindung mit Redis Datenbank her.
+
+## Handbuch
+### Wichtige Begriffe
+**Stakeholder:**Benutzer der an dem Dokument beteiligt ist.
+**Owner:** Eine Datei hat immer genau __einen__ Eigentümer, der auch die Aggregation bestimmt
+**Coowner:** Datei kann, aber beliebig viele coowner besitzen
+**Aggregation:** Bestimmt je nach Typ wie geschützt die Datei sein soll. Siehe Abschnitt xxx
+**Stakeholderaktion:** Ein Owner/coowner bestimmt welche Aktionen auf einem Dokument erlaubt sind.
+**Stakeholder-Vertrauen:** Beschreibt zwischen 0 und 1, wie stark die Bindung ist
+**Pfad-Vertrauen:** Wird berechnet bei der __Traversierung__
+
+
+## Graph Umsetzung
+Der Graph enthält zwei Arten von Knoten, Benutzer und Dokumente und zwei Arten von Kanten Benutzer-Benutzer, Benutzer->Dokument.
+
+### Benutzer
+Benutzer können Beziehungen mit anderen Benutzern und/oder auch Dokumenten haben.
+
+Die Beziehung zwischen Benutzer-Benutzer ist definiert mit dem Beziehungstyp und dem Gewicht.
+(Diese Attribute können natürlich beliebig ausgetauscht oder erweitert werden)
+
+Der Beziehungstyp ist nur eine Bezeichnung und das Gewicht bestimmt wie stark die Beziehung zwischen den beiden ist.
+
+Benutzer-Dokumente sind bestimmt ob der Benutzer Besitzer oder Mitbesitzer ist, das Vertrauen zu der Datei und die Aktion die erlaubt sind. 
+
+### Dokumente
+Dokumente haben normalerweise immer eine Beziehung mit einem oder mehreren Benutzern (Stakeholder).
+
+Der Owner des Dokumentes bestimmt die __Aggregation__ und außerdem welche Aktionen erlaubt sind.
+
+Der Coowner gibt nur die erlaubten Aktionen an.
+
+### Aggregationstyp
+**avg**  = Durschnitt von Stakeholder Trust auf Resource muss höher sein als Pfad Traversierung von den jeweiligen Pfaden
+**conj** = Alle Pfad-Vertrauen müssen höher sein, als das Vertrauen von den Stakeholdern
+**disj** = Mindestens ein Pfad-Vertrauen muss höher sein
+**maj**  = Mehr als die Hälfte der Pfad-Vertrauen muss höher sein als die von den Stakeholdern
+
+## Traversierung
+Man traversiert immer vom Stakeholder zu dem Benutzer der angefragt hat. Man rechnet den schnellsten Weg aus.
+
+## Eigenschaften
+Das Projekt enthält folgende Funktionen:
+
+- Graph Traversierung mit Start und Endknoten, dabei wird das Gewicht von jeder Kante zusammengerechnet, um so den schnellsten Pfad zu ermitteln
+- Logging Parameter, der alle wichtigen Berechnungen speichert und zum Schluss ausgibt
+- Multi-Party Dokumente, die ermöglichen, dass mehrere Benutzer gleichzeitig das gleiche Dokument besitzen
+- Eine Demo um das System zu testen
+- Knoten/Kanten können in Graph hinzugefügt werden
+- 
+
+## Beispiel 
+
+"Bild einfügen" kleines nur 4 Knoten oder so
+
+file1 <- Alice(owner), aggregation(disj), trust(0.7), read
+      <- Bob (coowner), trust(0.6), like, read
+
+Bedeutet: Zwei Benutzer haben jetzt Mitspracherecht an der Datei file1. 
+Die Benutzer bestimmen über die Aktionen (like, read...) was erlaubt ist. Wenn der Benutzer die Aktion like versucht auf das Dokument muss jeder Stakeholder die Aktion auch besitzen, sonst darf man nur drauf lesen.
+Außerdem muss das Vertrauen vom jeweiligen Stakeholder höher sein als der Pfad Vertrauen (siehe Traversierung).
+
+Wie sicher das ganze ist von außen hängt stark mit dem Aggregationstyp ab
