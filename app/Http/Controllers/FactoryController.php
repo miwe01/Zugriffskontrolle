@@ -29,7 +29,7 @@ class FactoryController extends Controller
         $redisGraph->delete("SocialNetwork");
 
 
-        $model = new SocialNetwork();
+        $model = new SocialNetwork_api();
         $conn = $model->getConnection();
 
         $this->faker = Faker\Factory::create();

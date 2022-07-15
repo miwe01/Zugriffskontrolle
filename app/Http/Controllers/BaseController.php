@@ -123,9 +123,8 @@ class BaseController extends Controller
         $graph->addEdge($edge14);
         
 
+  
         $commitQuery = $graph->getCommitQuery();
-
-
 
         
     
