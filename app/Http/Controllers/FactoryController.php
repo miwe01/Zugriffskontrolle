@@ -1,20 +1,15 @@
 <?php
-
 namespace App\Http\Controllers;
 use Predis;
 use Redislabs\Module\RedisGraph\RedisGraph;
 
-use App\Models\SocialNetwork;
+use App\Models\SocialNetwork_api;
 use Redislabs\Module\RedisGraph\Node;
 use Redislabs\Module\RedisGraph\Edge;
 
 use Redislabs\Module\RedisGraph\GraphConstructor;
 use Redislabs\Module\RedisGraph\Query;
 use Faker;
-
-//use mkorkmaz\src\RedisGraph;
-
-
 
 
 
@@ -26,28 +21,23 @@ class FactoryController extends Controller
         $redisClient = new Predis\Client();
         $redisGraph = RedisGraph::createWithPredis($redisClient);
 
-        $redisGraph->delete("SocialNetwork");
-
-
         $model = new SocialNetwork_api();
         $conn = $model->getConnection();
 
         $this->faker = Faker\Factory::create();
 
-
-        $graph = $model->createGraph("SocialNetwork");
-
-        $this->createPerson($graph, $conn, 50, 2);
+        $graph = $model->createGraph("Faker");
         
-        // 10000 Nodes mat 100% Edges = 10000
-        //$this->createPerson($graph, $conn, 30000, 1); 
+
+        // Graph löschen
+        //$redisGraph->delete("Faker");
+
+        // Erstellt 45000 Knoten und 90000 Kanten
+        // Mehr kann ich nicht in einem Stück übertragen, muss Webseite reloaden um nochmal zu senden
+        //$this->createPerson($graph, $conn, 30000, 1.5); 
+
+        // Letzter Parameter erhöht Edge Anzahl sehr
         //$this->createPerson($graph, $conn, 20000, 2); 
-        //$this->createPerson($graph, $conn, 10000, 1); 
-
-
-
-        //$this->createPersons($graph, $conn, 20000, true);
-        //$this->createPersons($graph, $conn, 20000, false);
         return "OK";
     }
 
@@ -59,7 +49,6 @@ class FactoryController extends Controller
             'email' => $this->faker->email(),
             'phone' => $this->faker->phoneNumber(),
             'gender' => $this->faker->randomElement(['männlich', 'weiblich', 'divers']),
-            'degree' => $this->faker->randomElement(["Informatik", "Wirtschaftsinformatik", "MCD", "Elektrotechnik"]) // ...
         ];
 
         return $property;
