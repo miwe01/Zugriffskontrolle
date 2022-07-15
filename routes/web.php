@@ -25,17 +25,17 @@ use App\Http\Controllers\FactoryController;
 
 //Route::get('/', [Controller::class, 'test']);
 
-Route::get('/demo', function () {
-    return view('welcome');
+Route::get('/', function () {
+    return view('demo');
 });
 Route::get('/add', function () {
     return view('add');
 });
 
 
-Route::get('/', [BaseController::class, 'test']);
+Route::get('/graph', [BaseController::class, 'test']);
 
-Route::get('/test', [Controller::class, 'evaluatePolicy']);
+Route::get('/access', [Controller::class, 'evaluatePolicy']);
 // Route::get('/test2', [Controller2::class, 'evaluatePolicy']);
 Route::get('/test3', [BaseController::class, 'test']);
 

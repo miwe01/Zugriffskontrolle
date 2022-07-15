@@ -28,3 +28,5 @@ Route::get('/addFile', [\App\Http\Controllers\ApiController::class, 'addFile_api
 
 Route::get('/addEdgeUserUser', [\App\Http\Controllers\ApiController::class, 'addEdgeUserUser_api']);
 Route::get('/addEdgeUserFile', [\App\Http\Controllers\ApiController::class, 'addEdgeUserFile_api']);
+
+Route::get('/deleteGraph', [\App\Http\Controllers\ApiController::class, 'deleteGraph_api']);
