@@ -26,11 +26,12 @@ class Controller extends BaseController
     //       (disj, maj, conj: wenn $case1/2/3 erfüllt wurde)
     private function access($check, $action){
       // $aboveAverage || $case 1 || $case2 || $case3
-      if($check && $action != "false") return "Du darfst auf die Ressource " . $action;
+      if(!$check) return "Du hast keinen Zugriff, da dein Vertrauenslevel zu niedrig ist";
 
-      if($action == "false") return "Du darfst nur auf die Ressource sehen (view)";
+      if($action != "false") return "Du darfst auf die Ressource " . $action;
+
+      else return "Du darfst nur auf die Ressource sehen (view), weil die Aktion nicht jeder Stakeholder erlaubt";
       
-      return "Du hast keinen Zugriff, da dein Vertrauenslevel zu niedrig ist";
     }
 
     // Average Fall
@@ -44,14 +45,20 @@ class Controller extends BaseController
     //       $log = wichtige Werte stehen da drin
     // out:  Endresultat von Zugriffskontrolle
     private function averageAggregation($policy, $action, $time_pre, $logAllow, $log){
-      if($logAllow) $log[] = "<p>Average Aggregation</p><h4>Resultat</h4>";
+      if($logAllow) $log[] = 
+      "<h3>Aggregation</h3>
+      <p>Besitzer hat <b>avg</b> Aggregation ausgewählt</p>
+      <p>avg= <b>Mehr als die Hälfte</b> der Pfad-Vertrauen größer als durchschnittlicher Stakeholder-Vertrauen</p>";
 
         // 1. Schritt
         //source: https://stackoverflow.com/questions/5945199/counting-occurrence-of-specific-value-in-an-array-with-php
-        $occurences = count(array_filter($policy, function ($n) { return $n == true; }));
+        $occurences = count(array_filter($policy, function ($n) { return $n == "true"; }));
+
         $aboveAverage = $occurences > round( (count( $policy )-1) /2);
+        $boolString = $aboveAverage ? "true" : "false";
 
         // Wenn mehr true als false in $policy
+        if($logAllow) $log[] = "<p>Mehr als die Hälfte richtig? " . $boolString ."</p>";
         if($aboveAverage)
           $s = $this->access(true, $action);
         else
@@ -64,7 +71,7 @@ class Controller extends BaseController
         // 3. Schritt
         // Wenn logging an
         if($logAllow){ 
-          $log[] = "<p>" .$s . "</p>"; 
+          $log[] = "<h3>Resultat</h3> <p>" .$s . "</p>"; 
           $log[] = "<p>Zeit: " .$sec . "</p>"; 
           return $log;
         }
@@ -83,18 +90,22 @@ class Controller extends BaseController
     //       $log = wichtige Werte stehen da drin
     // out:  Endresultat von Zugriffskontrolle
     private function otherAggregations($policy, $action, $aggregation, $time_pre, $logAllow, $log){
-      if($logAllow) $log[] = "<p>" . $aggregation ." Aggregation</p><h4>Resultat</h4>";
-
+      if($logAllow) $log[] = 
+      "<h3>Aggregation</h3> <p>Besitzer hat <b>" . $aggregation ."</b> Aggregation ausgewählt</p><p>
+      conj = <b>Alle</b> Pfad-Vertrauen größer als Stakeholder-Vertrauen<br>
+      disj = <b>Mindestens</b> ein Pfad-Vertrauen größer als Stakeholder-Vertrauen<br>
+      maj = <b>Mehr als die Hälfte</b> der Pfad-Vertrauen größer als Stakeholder-Vertrauen</p>";
       
-      $case1 = $aggregation == "conj" && !in_array("false", $policy); // alle Bedingungen müssen erfüllt sein
+      $conj = $aggregation == "conj" && !in_array("false", $policy); // alle Bedingungen müssen erfüllt sein
       
-      $case2 = $aggregation == "disj" && in_array("true", $policy); // mindestens eine muss erfüllt sein 
+      $disj = $aggregation == "disj" && in_array("true", $policy); // mindestens eine muss erfüllt sein 
       
-      $case3 = $aggregation == "maj" && // über die Hälfte muss erfüllt sein
+      $maj = $aggregation == "maj" && // über die Hälfte muss erfüllt sein
       count( array_filter( $policy, function ($n) { return $n == "true"; } )) > round( (count( $policy )-1) /2); 
 
+      
       // 1. Schritt
-      if($case1 || $case2 || $case3)
+      if($conj || $disj || $maj)
           $s = $this->access(true, $action);
       else
           $s = $this->access(false, $action);
@@ -105,7 +116,7 @@ class Controller extends BaseController
       
       // 3. Schritt
       if($logAllow){ 
-          $log[] = "<p>" .$s . "</p>"; 
+          $log[] = "<h3>Resultat</h3><p>" .$s . "</p>"; 
           $log[] = "<p>Zeit: " .$sec . "s</p>"; 
           return $log;
       }
@@ -140,13 +151,13 @@ class Controller extends BaseController
     // Wenn nicht explizit true dann immer logging aus
     $logAllow = $req->input('logAllow') ?? false;
 
-    if($logAllow) $log[] = "<h3>Output</h3><ul><li>User<b> " . $name[0] . " " . $name[1] . "</b> möchte auf Resource<b> " . $r . "</b> mit Aktion <b>" . $action . "</b> zugreifen</li></ul>";
+    if($logAllow) $log[] = "<h2>Output</h2><li>User<b> " . $name[0] . " " . $name[1] . "</b> möchte auf Resource<b> " . $r . "</b> mit Aktion <b>" . $action . "</b> zugreifen</li>";
 
     $model = new SocialNetwork();
     try{
       // 2. Schritt
       $aggregation = ($model->StakeholderOrAggregation($r, $name));
-      
+
       // Falls Benutzer Stakeholder ist
       if($aggregation === true){
         if($logAllow){
@@ -161,7 +172,7 @@ class Controller extends BaseController
         return "Du bist Stakeholder";
       }
       // 3. Schritt
-      $pathValues = $model->path($r, $name, $log, $logAllow);
+      $pathValues = $model->path($r, $name, $logAllow, $log);
 
       // 4. Schritt
       $res = $model->stakeholderActions($r, $aggregation, $pathValues, $action, $log, $logAllow);

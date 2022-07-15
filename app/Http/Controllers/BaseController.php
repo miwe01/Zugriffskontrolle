@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 
 use Predis;
@@ -18,22 +19,12 @@ use MP\Cypher\QueryBuilder;
 
 class BaseController extends Controller
 {
-    //
+
     function test(){
         $redisClient = new Predis\Client();
         $redisGraph = RedisGraph::createWithPredis($redisClient);
 
-
-        // ************** TrustTable **************************
-
-        // create Trust Table
-        //GRAPH.QUERY TrustTable "CREATE (:family {trust:0.8}), (:friends {trust :0.7}), (:others {trust :0.5})"
-
-        // Für Trust von zB familie zu bekommen
-        //GRAPH.QUERY TrustTable "MATCH (f:family) RETURN f.trust"
-
-        // ********************
-       
+        $result = $redisGraph->delete("SocialNetwork");
 
 
         // *****************Network****************************
@@ -68,8 +59,8 @@ class BaseController extends Controller
 
         
         $edgeProperties = ['name' => 'friends', 'distance'=>0.6];
-        $edgeProperties2 = ['name' => 'family', 'distance'=>0.8];
-        $edgeProperties3 = ['name' => 'family', 'distance'=>0.8];
+        $edgeProperties2 = ['name' => 'family', 'distance'=>0.9];
+        $edgeProperties3 = ['name' => 'family', 'distance'=>0.7];
 
         
 
@@ -106,8 +97,9 @@ class BaseController extends Controller
         $edge10 = Edge::create($person4, 'is', $person3)->withProperties($edgeProperties3);
         $edge11 = Edge::create($person3, 'is', $person4)->withProperties($edgeProperties3);
 
-
         $graph = new GraphConstructor('SocialNetwork');
+
+ 
         $graph->addNode($person1);
         $graph->addNode($person2);
         $graph->addNode($person3);
@@ -132,8 +124,19 @@ class BaseController extends Controller
         
 
         $commitQuery = $graph->getCommitQuery();
-        $result = $redisGraph->commit($commitQuery);
 
+
+
+        
+    
+
+
+        // $commitQuery = 'GRAPH.DELETE SocialNetwork';
+        $result = $redisGraph->commit($commitQuery);
+        //$result->delete("SocialNetwork");
+
+
+        
         //********************************************//
 
 
@@ -151,36 +154,7 @@ class BaseController extends Controller
         $result = $redisGraph->query($matchQuery);
         $resultSet = $result->getResultSet();
 
-        var_dump($resultSet); // Dumps first result
-
-
-        //*************RICHTIGER ALGORITHMUS*********************
-        // source https://stackoverflow.com/questions/40042234/shortest-paths-with-cost-property
-
-        //im moment auf 2 Hops eingestellt (also über zwei Knoten (1. Indirekten Knoten noch dabei))
-        // GRAPH.QUERY SocialNetwork 
-        // "MATCH p=(from:person{name:'Alice'}), (to:person{name:'Charly'}) 
-        // WITH from, to MATCH path = (from)-[:is*1..2]->(to) WITH REDUCE (total = 0, r in relationships(path) | total + r.distance) 
-        // as cost, path ORDER BY cost RETURN cost LIMIT 1"
-
-        //schnellster weg pfad und kosten
-        //GRAPH.QUERY SocialNetwork "MATCH p=(from:person{name:'Alice'}), (to:person{name:'Charly'}) WITH from, to MATCH path = (from)-[:is*1..5]->(to) WITH REDUCE (total = 0, r in relationships(path) | total + r.distance) as cost, path ORDER BY cost RETURN [node IN nodes(path) | node.name], cost LIMIT 1"
-
-        // schnellster Weg wo der schnellste Weg visualisiert wird (Redis Insight)
-        // GRAPH.QUERY SocialNetwork
-        // "MATCH p=(from:person{name:'Alice'}), (to:person{name:'Charly'}) 
-        // WITH from, to MATCH path = (from)-[:is*1..5]->(to) WITH REDUCE (total = 0, r in relationships(path) | total + r.distance) 
-        // as cost, path ORDER BY cost RETURN path, cost LIMIT 1"
-
-        // Wenn man alle Personen zeigen möchte
-        //GRAPH.QUERY SocialNetwork 'MATCH (p:person)-[v:is]-(p2:person) RETURN p, p2'
-
-
-        // wenn man alle Personen und Dokumente zeigen möchte
-        // GRAPH.QUERY SocialNetwork 'MATCH (p:person), (f:file) RETURN p, f'
-        
-
-       
+        echo "Graph wurde erstellt";  
     }
     
 }

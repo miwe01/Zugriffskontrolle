@@ -1,12 +1,21 @@
 <?php
 
 namespace App\Http\Controllers;
+use Predis;
+use Redislabs\Module\RedisGraph\RedisGraph;
 
-use Illuminate\Http\Request;
 use App\Models\SocialNetwork;
 use Redislabs\Module\RedisGraph\Node;
 use Redislabs\Module\RedisGraph\Edge;
+
+use Redislabs\Module\RedisGraph\GraphConstructor;
+use Redislabs\Module\RedisGraph\Query;
 use Faker;
+
+//use mkorkmaz\src\RedisGraph;
+
+
+
 
 
 class FactoryController extends Controller
@@ -14,18 +23,26 @@ class FactoryController extends Controller
     private $faker;
 
     public function create(){
-        
+        $redisClient = new Predis\Client();
+        $redisGraph = RedisGraph::createWithPredis($redisClient);
+
+        $redisGraph->delete("SocialNetwork");
+
+
         $model = new SocialNetwork();
         $conn = $model->getConnection();
 
         $this->faker = Faker\Factory::create();
 
-        $graph = $model->createGraph("Faker2");
 
-        //$this->createPerson($graph, $conn, 50, 2); // 10000 Nodes mat 100% Edges = 10000
+        $graph = $model->createGraph("SocialNetwork");
+
+        $this->createPerson($graph, $conn, 50, 2);
+        
+        // 10000 Nodes mat 100% Edges = 10000
         //$this->createPerson($graph, $conn, 30000, 1); 
         //$this->createPerson($graph, $conn, 20000, 2); 
-        $this->createPerson($graph, $conn, 10000, 1); 
+        //$this->createPerson($graph, $conn, 10000, 1); 
 
 
 
@@ -33,23 +50,6 @@ class FactoryController extends Controller
         //$this->createPersons($graph, $conn, 20000, false);
         return "OK";
     }
-
-    public function pathFinding(){
-        $from = "";
-        $to = "";
-
-        $model = new SocialNetwork();
-        $conn = $model->getConnection();
-
-        $time_pre = microtime(true);
-        $model->path($from, $to);
-        $time_post = microtime(true);
-
-        $s = ($time_post - $time_pre);
-
-        echo $s;
-    }
-    
 
     public function getAttributes(){
         $property = [

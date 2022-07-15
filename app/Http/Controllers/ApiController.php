@@ -47,10 +47,11 @@ class ApiController extends Controller
 
     // Kante Benutzer->Datei hinzufügen
     public function addEdgeUserFile_api(Request $req){
-      if (!$req->has('user') || !$req->has('file') || !$req->has('stakeholder') ||  !$req->has('trust') || !$req->has('actions'))
+      if (!$req->has('user') || !$req->has('file') || !$req->has('stakeholder') ||  !$req->has('trust') || !$req->has('actions') || !$req->has('agg'))
           return "Fehler: Parameter falsch";
 
       $model = new SocialNetwork();
-      return $model->addEdgeUserFile($req->input('user'), $req->input('file'), $req->input('stakeholder'), $req->input('trust'), $req->input('actions'));
+      return $model->addEdgeUserFile($req->input('user'), $req->input('file'), $req->input('stakeholder'), $req->input('trust'), $req->input('actions'), $req->input('agg'));
     }
+    
 }
