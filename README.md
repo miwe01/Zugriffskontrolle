@@ -45,9 +45,9 @@ https://redis.com/redis-enterprise/redis-insight/
 Außerdem wurde die library [redislabs-redisgraph](https://github.com/mkorkmaz/redislabs-redisgraph-php) benutzt, um den Graphen zu erstellen und Knoten/Kanten hinzuzufügen.
 
 ### Issues
-Bei der Entwicklung hatte ich zwei Issues festgestellt, die ich auch gemeldet habe.
-[Issue1](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/5)
-[Issue2](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/6)
+Bei der Entwicklung hatte ich zwei Issues festgestellt, die ich auch gemeldet habe.<br/>
+[Issue1](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/5)<br/>
+[Issue2](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/6)<br/>
 
 Letztes Update: 16.07<br/>
 __Issue1__ wurde nur in Node gelöst, deshalb nochmal beide Dateien überprüfen ob ein "double" Check ist (siehe Issue1).
@@ -61,9 +61,9 @@ Methode: getCommitQuery().
 
 
 ## Routen
- / -> Demo ausprobieren (vorher Graph mit /graph erstellen)
- /graph -> kleinen Graph erstellen 
- /add -> Knoten/Kanten hinzufügen
+ / -> Demo ausprobieren (vorher Graph mit /graph erstellen)<br/>
+ /graph -> kleinen Graph erstellen <br/>
+ /add -> Knoten/Kanten hinzufügen<br/>
  /create -> Massendaten erstellen
 
 ## Wichtige Dateien
@@ -89,7 +89,7 @@ SocialNetwork_api -> enthält Anfragen für Benutzer/Resourcen zu erstellen/zur�
 
 
 ## Graph Umsetzung
-Der Graph enthält zwei Arten von Knoten, Benutzer und Dokumente und zwei Arten von Kanten Benutzer-Benutzer, Benutzer->Dokument.
+Der Graph enthält zwei Arten von Knoten Benutzer & Dokumente und zwei Arten von Kanten Benutzer-Benutzer, Benutzer->Dokument.
 
 ### Benutzer
 Benutzer können Beziehungen mit anderen Benutzern und/oder auch Dokumenten haben.
@@ -119,7 +119,8 @@ Man traversiert immer vom Stakeholder zu dem Benutzer der angefragt hat. Man rec
 
 ```
 # Code von Pfad Traversierung, gibt Gesamtgewicht zurück und welche Knoten/Kanten durschlaufen wurde
-$HOPS = x
+$HOPS = x;
+
 $q = 
 'MATCH (from:person{firstname:"", lastname:""}),
 (to:person{firstname:"", lastname:""})
@@ -132,4 +133,4 @@ as cost, path ORDER BY cost DESC RETURN cost, path LIMIT 1';
 ## Zugriff
 Der Benutzer hat Zugriff wenn die Aggregation stimmt, die stimmt wiederum wenn das Vertrauen größer ist wie das Stakeholder-Vertrauen. <br/>
 
-Die Aktion die der Benutzer ausführen möchte gelingt nur wenn jeder STakeholder die Aktion erlaubt, sonst darf man nur drauf lesen.<br/>
+Die Aktion die der Benutzer ausführen möchte gelingt nur wenn jeder Stakeholder die Aktion erlaubt, sonst darf man nur drauf lesen.<br/>
