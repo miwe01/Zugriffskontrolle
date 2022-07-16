@@ -49,14 +49,14 @@ Bei der Entwicklung hatte ich zwei Issues festgestellt, die ich auch gemeldet ha
 [Issue1](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/5)<br/>
 [Issue2](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/6)<br/>
 
-Letztes Update: 16.07<br/>
-__Issue1__ wurde nur in Node gelöst, deshalb nochmal beide Dateien überprüfen ob ein "double" Check ist (siehe Issue1).
-Methode: getPropValueWithDataType($propValue)
-/vendor/mkorkmaz/redislabs-redisgraph-php/src/RedisGraph/Node.php
-/vendor/mkorkmaz/redislabs-redisgraph-php/src/RedisGraph/Edge.php
+#### Letztes Update: 16.07
+__Issue1__ wurde nur in Node gelöst, deshalb nochmal beide Dateien überprüfen ob ein "double" Check ist (siehe Issue1).<br/>
+Methode: getPropValueWithDataType($propValue)<br/>
+/vendor/mkorkmaz/redislabs-redisgraph-php/src/RedisGraph/Node.php<br/>
+/vendor/mkorkmaz/redislabs-redisgraph-php/src/RedisGraph/Edge.php<br/>
 
-__Issue2__, wurde noch nicht behoben. Code aus Issue2 nehmen.
-Methode: getCommitQuery().
+__Issue2__, wurde noch nicht behoben. Code aus Issue2 nehmen.<br/>
+Methode: getCommitQuery().<br/>
 /vendor/mkorkmaz/redislabs-redisgraph-php/src/RedisGraph/GraphConstructor.php
 
 
@@ -80,12 +80,12 @@ SocialNetwork_api -> enthält Anfragen für Benutzer/Resourcen zu erstellen/zur�
 ## Handbuch
 ### Wichtige Begriffe
 **Stakeholder:** Benutzer der an dem Dokument beteiligt ist.<br/>
-**Owner:** Besitzer der Datei, jede Datei hat immer genau __einen__ Besitzer, der auch die Aggregation bestimmt<br/>
+**Owner:** Besitzer der Datei, jede Datei hat immer genau **einen** Besitzer, der auch die Aggregation bestimmt<br/>
 **Coowner:** Beliebig viele Mitbesitzer, können nicht Aggregation bestimmen<br/>
 **Aggregation:** Bestimmt je nach Typ wie geschützt die Datei sein soll. (Siehe Abschnitt Aggregationstypen)<br/>
 **Stakeholderaktion:** Ein Owner/coowner bestimmt welche Aktionen auf einem Dokument erlaubt sind.<br/>
 **Stakeholder-Vertrauen:** Beschreibt zwischen 0 und 1, wie stark die Bindung zueinander ist.<br/>
-**Pfad-Vertrauen:** Wird berechnet bei der __Traversierung__
+**Pfad-Vertrauen:** Wird berechnet bei der **Traversierung**
 
 
 ## Graph Umsetzung
