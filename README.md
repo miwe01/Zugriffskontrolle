@@ -4,6 +4,15 @@ Das Abschlussprojekt enthält einen Prototyp einer Zugriffskontrolle für ein so
 
 Die Zugriffskontrolle ist größenteils nach dem [Rathore-Modell](https://link.springer.com/article/10.1007/s13278-017-0425-6) umgesetzt worden.
 
+## Wichtige Eigenschaften
+Das Projekt enthält folgende Funktionen:
+
+- Graph Traversierung mit Start und Endknoten, dabei wird das Gewicht von jeder Kante zusammengerechnet, um so den schnellsten Pfad zu ermitteln
+- Logging Parameter, der alle wichtigen Berechnungen speichert und zum Schluss ausgibt
+- Multi-Party Dokumente, die ermöglichen, dass mehrere Benutzer gleichzeitig das gleiche Dokument besitzen
+- Eine Demo um das System zu testen
+- Knoten/Kanten können in Graph hinzugefügt werden
+
 ## Installation Windows
 
 ```
@@ -40,7 +49,7 @@ Bei der Entwicklung hatte ich zwei Issues festgestellt, die ich auch gemeldet ha
 [Issue1](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/5)
 [Issue2](https://github.com/mkorkmaz/redislabs-redisgraph-php/issues/6)
 
-Letztes Update: 16.07
+Letztes Update: 16.07<br/>
 __Issue1__ wurde nur in Node gelöst, deshalb nochmal beide Dateien überprüfen ob ein "double" Check ist (siehe Issue1).
 Methode: getPropValueWithDataType($propValue)
 /vendor/mkorkmaz/redislabs-redisgraph-php/src/RedisGraph/Node.php
@@ -52,7 +61,6 @@ Methode: getCommitQuery().
 
 
 ## Routen
-schaue nochmal Projekt 
  / -> Demo ausprobieren (vorher Graph mit /graph erstellen)
  /graph -> kleinen Graph erstellen 
  /add -> Knoten/Kanten hinzufügen
@@ -60,23 +68,23 @@ schaue nochmal Projekt
 
 ## Wichtige Dateien
 ### Controller
-Controller -> Verarbeitet Anfrage ob Benutzer Zugriff auf Resource hat und gibt Endresultat zurück 
-ApiController -> schickt Api Anfragen weiter an Model
-FactoryController -> erstellt Massendaten
+Controller -> Verarbeitet Anfrage ob Benutzer Zugriff auf Resource hat und gibt Endresultat zurück <br/>
+ApiController -> schickt Api Anfragen weiter an Model<br/>
+FactoryController -> erstellt Massendaten<br/>
 BaseController -> erstellt kleinen Graph (der gleiche wie in der Demo)
 
 ### Model
-SocialNetwork -> enthält alle Anfragen bezüglich des Thema Zugriffskontrolle
+SocialNetwork -> enthält alle Anfragen bezüglich des Thema Zugriffskontrolle<br/>
 SocialNetwork_api -> enthält Anfragen für Benutzer/Resourcen zu erstellen/zurückzugeben
 
 ## Handbuch
 ### Wichtige Begriffe
-**Stakeholder:**Benutzer der an dem Dokument beteiligt ist.
-**Owner:** Besitzer der Datei, jede Datei hat immer genau __einen__ Besitzer, der auch die Aggregation bestimmt
-**Coowner:** Beliebig viele Mitbesitzer, können nicht Aggregation bestimmen
-**Aggregation:** Bestimmt je nach Typ wie geschützt die Datei sein soll. (Siehe Abschnitt Aggregationstypen)
-**Stakeholderaktion:** Ein Owner/coowner bestimmt welche Aktionen auf einem Dokument erlaubt sind.
-**Stakeholder-Vertrauen:** Beschreibt zwischen 0 und 1, wie stark die Bindung zueinander ist.
+**Stakeholder:** Benutzer der an dem Dokument beteiligt ist.<br/>
+**Owner:** Besitzer der Datei, jede Datei hat immer genau __einen__ Besitzer, der auch die Aggregation bestimmt<br/>
+**Coowner:** Beliebig viele Mitbesitzer, können nicht Aggregation bestimmen<br/>
+**Aggregation:** Bestimmt je nach Typ wie geschützt die Datei sein soll. (Siehe Abschnitt Aggregationstypen)<br/>
+**Stakeholderaktion:** Ein Owner/coowner bestimmt welche Aktionen auf einem Dokument erlaubt sind.<br/>
+**Stakeholder-Vertrauen:** Beschreibt zwischen 0 und 1, wie stark die Bindung zueinander ist.<br/>
 **Pfad-Vertrauen:** Wird berechnet bei der __Traversierung__
 
 
@@ -101,19 +109,27 @@ Der Owner des Dokumentes bestimmt die __Aggregation__ und außerdem welche Aktio
 Der Coowner gibt nur die erlaubten Aktionen an.
 
 ### Aggregationstypen
-**avg**  = Durschnitt von Stakeholder Trust auf Resource muss höher sein als Pfad Traversierung von den jeweiligen Pfaden
-**conj** = Alle Pfad-Vertrauen müssen höher sein, als das Vertrauen von den Stakeholdern
-**disj** = Mindestens ein Pfad-Vertrauen muss höher sein
+**avg**  = Durschnitt von Stakeholder Trust auf Resource muss höher sein als Pfad Traversierung von den jeweiligen Pfaden<br/>
+**conj** = Alle Pfad-Vertrauen müssen höher sein, als das Vertrauen von den Stakeholdern<br/>
+**disj** = Mindestens ein Pfad-Vertrauen muss höher sein<br/>
 **maj**  = Mehr als die Hälfte der Pfad-Vertrauen muss höher sein als die von den Stakeholdern
 
 ## Traversierung
 Man traversiert immer vom Stakeholder zu dem Benutzer der angefragt hat. Man rechnet den schnellsten Weg aus, auf dem Weg zum Benutzer multipliziert man die Gewichte der Kanten zusammen.
 
-## Wichtige Eigenschaften
-Das Projekt enthält folgende Funktionen:
+```
+# Code von Pfad Traversierung, gibt Gesamtgewicht zurück und welche Knoten/Kanten durschlaufen wurde
+$HOPS = x
+$q = 
+'MATCH (from:person{firstname:"", lastname:""}),
+(to:person{firstname:"", lastname:""})
+WITH from, to MATCH path = (from)-[:is*1..' . $HOPS . ']->(to) 
+WITH REDUCE (total = 1, r in relationships(path) | total * r.distance) 
+as cost, path ORDER BY cost DESC RETURN cost, path LIMIT 1';
 
-- Graph Traversierung mit Start und Endknoten, dabei wird das Gewicht von jeder Kante zusammengerechnet, um so den schnellsten Pfad zu ermitteln
-- Logging Parameter, der alle wichtigen Berechnungen speichert und zum Schluss ausgibt
-- Multi-Party Dokumente, die ermöglichen, dass mehrere Benutzer gleichzeitig das gleiche Dokument besitzen
-- Eine Demo um das System zu testen
-- Knoten/Kanten können in Graph hinzugefügt werden
+```
+
+## Zugriff
+Der Benutzer hat Zugriff wenn die Aggregation stimmt, die stimmt wiederum wenn das Vertrauen größer ist wie das Stakeholder-Vertrauen. <br/>
+
+Die Aktion die der Benutzer ausführen möchte gelingt nur wenn jeder STakeholder die Aktion erlaubt, sonst darf man nur drauf lesen.<br/>
